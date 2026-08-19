@@ -7,10 +7,13 @@ that reads like `cache.last_synced_at` always see the current value —
 see the note in cache.py for why that distinction matters.
 """
 
+from datetime import datetime
+
 from fastapi import APIRouter, HTTPException
 
 from app import cache
-
+from app.schemas import Stock_Update_item
+from app.cache import apply_stock_update
 router = APIRouter()
 
 
@@ -43,3 +46,18 @@ def get_stock(product_id: int):
 def get_all_stock():
     """Handy for eyeballing the whole cache while testing."""
     return {"last_synced_at": cache.last_synced_at, "stock": cache.stock_cache}
+
+
+@router.post("/webhook/stock-update")
+def receive_stock_update(payload: list[Stock_Update_item]):
+    """The webhook endpoint from the spec: "the warehouse will call this
+    endpoint to notify us of stock changes." It updates the CACHE, not
+    the warehouse.
+    """
+    data = {item.product_id: item.quantity for item in payload}
+    count = cache.apply_stock_update(data)
+    return {
+        "message": "Stock update received",
+        "products_updated": count,
+        "last_synced_at": cache.last_synced_at,
+    }

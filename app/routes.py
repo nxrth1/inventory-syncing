@@ -7,7 +7,6 @@ that reads like `cache.last_synced_at` always see the current value —
 see the note in cache.py for why that distinction matters.
 """
 
-from datetime import datetime
 
 from fastapi import APIRouter, HTTPException
 
